@@ -1,20 +1,17 @@
 package com.task.crud.controller;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatExceptionOfType;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static org.springframework.test.web.servlet.setup.MockMvcBuilders.standaloneSetup;
 
+import com.task.crud.exceptions.ProductNotFoundException;
 import com.task.crud.model.Product;
 import com.task.crud.service.ProductService;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
@@ -22,145 +19,133 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.springframework.http.MediaType;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.MvcResult;
-import org.springframework.test.web.servlet.RequestBuilder;
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 class ProductControllerTest {
+
+    public static final String EXCEPTION_MESSAGE = "Product not found with id: 1";
     @InjectMocks
     private ProductController productController;
 
     @Mock
     private ProductService productService;
 
-    private MockMvc mockMvc;
-
     @BeforeEach
     public void setup() {
         MockitoAnnotations.openMocks(this);
-        mockMvc = standaloneSetup(productController).build();
     }
 
     @Test
-    public void testGetAllProducts() throws Exception {
-        List<Product> products = getProductList();
+    void getAllProducts() {
+        // Prepare a list of products to be returned by the productService
+        List<Product> products = new ArrayList<>();
+        products.add(new Product(1L, "Product A", 100.0, "Description A"));
+        products.add(new Product(2L, "Product B", 150.0, "Description B"));
 
+        // Mock the productService's getAllProducts() method to return the prepared list
         when(productService.getAllProducts()).thenReturn(products);
 
-        RequestBuilder requestBuilder = MockMvcRequestBuilders.get("/products")
-                .accept(MediaType.APPLICATION_JSON);
+        // Call the getAllProducts() method in the ProductController
+        List<Product> result = productController.getAllProducts();
 
-        MvcResult result = mockMvc.perform(requestBuilder)
-                .andExpect(status().isOk())
-                .andReturn();
+        // Assert that the result matches the prepared list of products
+        assertThat(result).isEqualTo(products);
 
-        assertEquals(getExpectedJsonResponse(), result.getResponse().getContentAsString());
-
+        // Verify that the productService's getAllProducts() method was called
         verify(productService, times(1)).getAllProducts();
         verifyNoMoreInteractions(productService);
     }
 
     @Test
-    public void testGetProductById() throws Exception {
+    void getProductById() {
+        // Prepare a product to be returned by the productService
+        Product product = new Product(1L, "Product A", 100.0, "Description A");
 
-        when(productService.getProductById(anyLong())).thenReturn(getOptionalProduct());
+        // Mock the productService's getProductById() method to return the prepared product
+        when(productService.getProductById(1L)).thenReturn(Optional.of(product));
 
-        RequestBuilder requestBuilder = MockMvcRequestBuilders.get("/products/1")
-                .accept(MediaType.APPLICATION_JSON);
+        // Call the getProductById() method in the ProductController
+        Product result = productController.getProductById(1L);
 
-        MvcResult result = mockMvc.perform(requestBuilder)
-                .andExpect(status().isOk())
-                .andReturn();
+        // Assert that the result matches the prepared product
+        assertThat(result).isEqualTo(product);
 
-        assertEquals(getSingleExpectedJsonResponse(), result.getResponse().getContentAsString());
-
-        verify(productService, times(1)).getProductById(anyLong());
+        // Verify that the productService's getProductById() method was called
+        verify(productService, times(1)).getProductById(1L);
         verifyNoMoreInteractions(productService);
     }
 
     @Test
-    public void testCreateProduct() throws Exception {
-        when(productService.saveProduct(any(Product.class))).thenReturn(getProduct());
+    void createProduct() {
+        // Prepare a new product to be saved
+        Product newProduct = new Product(null, "New Product", 99.99, "New Description");
 
-        RequestBuilder requestBuilder = MockMvcRequestBuilders.post("/products")
-                .content(getRequestJson())
-                .contentType(MediaType.APPLICATION_JSON)
-                .accept(MediaType.APPLICATION_JSON);
+        // Prepare the product with ID after being saved
+        Product savedProduct = new Product(1L, "New Product", 99.99, "New Description");
 
-        MvcResult result = mockMvc.perform(requestBuilder)
-                .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andReturn();
+        // Mock the productService's saveProduct() method to return the saved product
+        when(productService.saveProduct(newProduct)).thenReturn(savedProduct);
 
-        assertEquals(getSingleExpectedJsonResponse(), result.getResponse().getContentAsString());
+        // Call the createProduct() method in the ProductController
+        Product result = productController.createProduct(newProduct);
 
-        verify(productService, times(1)).saveProduct(any(Product.class));
+        // Assert that the result matches the saved product
+        assertThat(result).isEqualTo(savedProduct);
+
+        // Verify that the productService's saveProduct() method was called with the new product
+        verify(productService, times(1)).saveProduct(newProduct);
         verifyNoMoreInteractions(productService);
     }
 
     @Test
-    public void testUpdateProduct() throws Exception {
-        when(productService.saveProduct(any(Product.class))).thenReturn(getProduct());
+    void updateProduct() {
+        // Prepare an existing product to be updated
+        Product existingProduct = new Product(1L, "Existing Product", 50.0, "Existing Description");
 
-        RequestBuilder requestBuilder = MockMvcRequestBuilders.put("/products/1")
-                .content(getRequestJson())
-                .contentType(MediaType.APPLICATION_JSON)
-                .accept(MediaType.APPLICATION_JSON);
+        // Prepare the updated product with the same ID
+        Product updatedProduct = new Product(1L, "Updated Product", 75.0, "Updated Description");
 
-        MvcResult result = mockMvc.perform(requestBuilder)
-                .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andReturn();
+        // Mock the productService's saveProduct() method to return the updated product
+        when(productService.saveProduct(updatedProduct)).thenReturn(updatedProduct);
 
-        assertEquals(getSingleExpectedJsonResponse(), result.getResponse().getContentAsString());
+        // Call the updateProduct() method in the ProductController
+        Product result = productController.updateProduct(1L, updatedProduct);
 
-        verify(productService, times(1)).saveProduct(any(Product.class));
+        // Assert that the result matches the updated product
+        assertThat(result).isEqualTo(updatedProduct);
+
+        // Verify that the productService's saveProduct() method was called with the updated product
+        verify(productService, times(1)).saveProduct(updatedProduct);
         verifyNoMoreInteractions(productService);
     }
 
     @Test
-    public void testDeleteProduct() throws Exception {
-        doNothing().when(productService).deleteProduct(anyLong());
+    void deleteProduct() {
+        // Call the deleteProduct() method in the ProductController
+        productController.deleteProduct(1L);
 
-        RequestBuilder requestBuilder = MockMvcRequestBuilders.delete("/products/1")
-                .accept(MediaType.APPLICATION_JSON);
-
-        MvcResult result = mockMvc.perform(requestBuilder)
-                .andExpect(status().isOk())
-                .andReturn();
-
-        assertEquals("", result.getResponse().getContentAsString());
-
-        verify(productService, times(1)).deleteProduct(anyLong());
+        // Verify that the productService's deleteProduct() method was called with the correct ID
+        verify(productService, times(1)).deleteProduct(1L);
         verifyNoMoreInteractions(productService);
     }
 
-    private static String getRequestJson() {
-        return "{\"name\":\"Product A\",\"price\":100.00,\"description\":\"Description A\"}";
+    @Test
+    public void testGetProductById_ProductNotFound() {
+        // Mock the productService's getProductById() method to return an empty optional
+        when(productService.getProductById(1L)).thenThrow(new ProductNotFoundException(EXCEPTION_MESSAGE));
+
+        // Call the getProductById() method in the ProductController and expect ProductNotFoundException
+        assertThatExceptionOfType(ProductNotFoundException.class)
+                .isThrownBy(() -> productController.getProductById(1L));
+
+        // Verify that the productService's getProductById() method was called with the correct ID
+        verify(productService, times(1)).getProductById(1L);
+        verifyNoMoreInteractions(productService);
     }
 
-    private static String getExpectedJsonResponse() {
-        return "[{\"id\":1,\"name\":\"Product A\",\"price\":100.0,\"description\":\"Description A\"},"
-               + "{\"id\":2,\"name\":\"Product B\",\"price\":150.0,\"description\":\"Description B\"}]";
-    }
-
-    private static String getSingleExpectedJsonResponse() {
-        return "{\"id\":1,\"name\":\"Product A\",\"price\":100.0,\"description\":\"Description A\"}";
-    }
-    private static List<Product> getProductList() {
-        Product product1 = new Product(1L, "Product A", 100.0, "Description A");
-        Product product2 = new Product(2L, "Product B", 150.0, "Description B");
-        List<Product> products = Arrays.asList(product1, product2);
-        return products;
-    }
-
-    private static Optional<Product> getOptionalProduct() {
-        return Optional.of(getProduct());
-    }
-
-    private static Product getProduct() {
-        return new Product(1L, "Product A", 100.0, "Description A");
+    @Test
+    public void testHandleProductNotFoundException() {
+        String exception = productController
+                .handleProductNotFoundException(new ProductNotFoundException(EXCEPTION_MESSAGE));
+        assertEquals(EXCEPTION_MESSAGE,exception);
     }
 }
