@@ -1,42 +1,41 @@
 package com.task.crud.config;
 
+import com.task.crud.service.UserDetailsServiceImpl;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.config.annotation.SecurityBuilder;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
-import org.springframework.security.config.annotation.web.WebSecurityConfigurer;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configuration.WebSecurityConfiguration;
+import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
 @EnableWebSecurity
-@EnableGlobalMethodSecurity(prePostEnabled = true)
-public class SecurityConfig implements WebSecurityConfigurer {
+@EnableGlobalMethodSecurity(prePostEnabled = true, securedEnabled = true, jsr250Enabled = true)
+public class SecurityConfig {
 
+    private final UserDetailsServiceImpl userDetailsService;
 
-    /**
-     * Initialize the {@link SecurityBuilder}. Here only shared state should be created
-     * and modified, but not properties on the {@link SecurityBuilder} used for building
-     * the object. This ensures that the {@link #configure(SecurityBuilder)} method uses
-     * the correct shared objects when building. Configurers should be applied here.
-     *
-     * @param builder
-     * @throws Exception
-     */
-    @Override
-    public void init(SecurityBuilder builder) throws Exception {
-        System.out.println("1111111111 Builder " + builder);
+    @Autowired
+    public SecurityConfig(UserDetailsServiceImpl userDetailsService) {
+        this.userDetailsService = userDetailsService;
     }
 
-    /**
-     * Configure the {@link SecurityBuilder} by setting the necessary properties on the
-     * {@link SecurityBuilder}.
-     *
-     * @param builder
-     * @throws Exception
-     */
-    @Override
-    public void configure(SecurityBuilder builder) throws Exception {
-        System.out.println("222222222222 Builder " + builder);
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {
+        httpSecurity.cors(Customizer.withDefaults())
+                .authorizeHttpRequests(authorize -> authorize
+                        .requestMatchers("/tokens/**").permitAll()
+                        .anyRequest().authenticated()
+                )
+                .formLogin(formLogin -> formLogin
+                        .loginPage("/login")
+                        .permitAll()
+                )
+                .rememberMe(Customizer.withDefaults());
 
+        return httpSecurity.build();
     }
+
 }
