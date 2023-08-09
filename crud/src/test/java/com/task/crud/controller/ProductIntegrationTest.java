@@ -76,10 +76,10 @@ public class ProductIntegrationTest {
 
     @Test
     public void loginUser() throws Exception {
-        // @formatter:off
-        this.mockMvc.perform(formLogin().user("user").password("password"))
+        this.mockMvc.perform(formLogin()
+                        .user("user")
+                        .password("password"))
                 .andExpect(authenticated());
-        // @formatter:on
     }
 
 }
