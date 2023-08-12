@@ -42,7 +42,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         String requestURI = request.getRequestURI();
-        if (requestURI.contains("/tokens")) {
+        if (shouldSkipAuthentication(requestURI)) {
             filterChain.doFilter(request, response);
             return;
         } else {
@@ -60,6 +60,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             }
         }
         filterChain.doFilter(request, response);
+    }
+
+    private static boolean shouldSkipAuthentication(String requestURI) {
+        return requestURI.contains("/tokens") ||
+                requestURI.contains("/manage") ||
+                requestURI.contains("/health") ||
+                requestURI.contains("/info") ||
+                requestURI.contains("/metrics");
     }
 
     private String extractJwt(String token) {
