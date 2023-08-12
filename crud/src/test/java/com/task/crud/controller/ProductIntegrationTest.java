@@ -36,7 +36,7 @@ public class ProductIntegrationTest {
         HttpHeaders headers = new HttpHeaders();
         headers.set("Authorization", "Bearer eyJhbGciOiJIUzI1NiJ9.eyJyb2xlcyI6W3siYXV0aG9yaXR5IjoiUk9MRV9VU0VSIn1dLCJpc3MiOiJjcnVkLXNlY3VyaXR5Iiwic3ViIjoidXNlciIsImlhdCI6MTY5MTEyMTUwMSwiZXhwIjoxNjkxOTg1NTAxfQ.KruHFkmq4dQW7n-qVjeU5n0di3hmY7qz9xxlmfoZshY");
 
-        MvcResult saveResult = mockMvc.perform(MockMvcRequestBuilders.post("/products")
+        MvcResult saveResult = mockMvc.perform(MockMvcRequestBuilders.post("/products/")
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON)
                         .content(requestJson)
@@ -72,14 +72,6 @@ public class ProductIntegrationTest {
                         .accept(MediaType.APPLICATION_JSON)
                         .headers(headers))
                 .andExpect(status().isNotFound());
-    }
-
-    @Test
-    public void loginUser() throws Exception {
-        this.mockMvc.perform(formLogin()
-                        .user("user")
-                        .password("password"))
-                .andExpect(authenticated());
     }
 
 }

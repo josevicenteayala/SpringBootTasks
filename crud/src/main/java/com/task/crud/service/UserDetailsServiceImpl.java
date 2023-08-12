@@ -2,6 +2,7 @@ package com.task.crud.service;
 
 import java.util.ArrayList;
 import java.util.List;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -13,8 +14,11 @@ import org.springframework.stereotype.Service;
 @Service
 public class UserDetailsServiceImpl implements UserDetailsService {
 
+    public static final String ROLE_USER = "ROLE_USER";
+
     private final List<UserDetails> users = new ArrayList<>();
 
+    @Autowired
     public UserDetailsServiceImpl() {
         // For this example, we add a single user with hardcoded credentials
         PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
@@ -22,7 +26,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
 
         users.add(User.withUsername("user")
                 .password(hashedPassword)
-                .authorities("ROLE_USER")
+                .authorities(ROLE_USER)
                 .build());
     }
 

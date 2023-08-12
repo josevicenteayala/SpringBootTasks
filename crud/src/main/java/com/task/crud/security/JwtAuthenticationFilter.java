@@ -6,16 +6,16 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import lombok.RequiredArgsConstructor;
+import java.io.IOException;
+import java.util.Objects;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-import java.io.IOException;
-import java.util.Objects;
-
 @Component
-@RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     public static final int BEARER_LENGTH = 7;
@@ -41,23 +41,23 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
      */
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-        String servletPath = request.getServletPath();
-        System.out.println("111111111111111111111111111111111111111 " + servletPath);
-        if (servletPath.contains("/tokens")) {
+        String requestURI = request.getRequestURI();
+        if (requestURI.contains("/tokens")) {
             filterChain.doFilter(request, response);
             return;
-        }
-        final String token = request.getHeader("Authorization");
-        if (Objects.isNull(token) || isNotBearer(token)) {
-           throw new ServletException("The user requires authentication");
         } else {
-            String jwt = extractJwt(token);
-            String user = jwtService.extractUsername(jwt);
-            UserDetails userDetails = userDetailsService.loadUserByUsername(user);
-            System.out.println("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
-            System.out.println(userDetails.getPassword());
-            System.out.println(userDetails.getUsername());
-            System.out.println("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
+            final String token = request.getHeader("Authorization");
+            if (Objects.isNull(token) || isNotBearer(token)) {
+                throw new ServletException("The user requires authentication");
+            } else {
+                String jwt = extractJwt(token);
+                String user = jwtService.extractUsername(jwt);
+                UserDetails userDetails = userDetailsService.loadUserByUsername(user);
+                UsernamePasswordAuthenticationToken authentication =
+                        new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+                authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                SecurityContextHolder.getContext().setAuthentication(authentication);
+            }
         }
         filterChain.doFilter(request, response);
     }
