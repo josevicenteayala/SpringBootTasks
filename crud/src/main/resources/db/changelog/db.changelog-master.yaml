@@ -1,0 +1,23 @@
+databaseChangeLog:
+  - changeSet:
+      id: 1
+      author: Jose Vicente
+      changes:
+        - createTable:
+            tableName: product
+            columns:
+              - column:
+                  name: id
+                  type: INT
+                  autoIncrement: true
+                constraints:
+                  primaryKey: true
+              - column:
+                  name: name
+                  type: VARCHAR(255)
+              - column:
+                  name: price
+                  type: DECIMAL(10, 2)
+              - column:
+                  name: description
+                  type: VARCHAR(255)
