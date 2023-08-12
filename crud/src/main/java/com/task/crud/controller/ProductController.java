@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/products")
+@CrossOrigin("*")
 public class ProductController {
 
     private final ProductService productService;
@@ -28,7 +29,7 @@ public class ProductController {
         return productService.getProductById(id).orElse(null);
     }
 
-    @PostMapping
+    @PostMapping("/")
     public Product createProduct(@RequestBody Product product) {
         return productService.saveProduct(product);
     }

@@ -84,7 +84,7 @@ class ProductControllerApiTest {
     public void testCreateProduct() throws Exception {
         when(productService.saveProduct(any(Product.class))).thenReturn(getProduct());
 
-        RequestBuilder requestBuilder = MockMvcRequestBuilders.post("/products")
+        RequestBuilder requestBuilder = MockMvcRequestBuilders.post("/products/")
                 .content(getRequestJson())
                 .contentType(MediaType.APPLICATION_JSON)
                 .accept(MediaType.APPLICATION_JSON);
